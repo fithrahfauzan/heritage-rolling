@@ -1,8 +1,15 @@
 import { createServerFn } from '@tanstack/react-start'
-import type { AssetInput, Asset, Classification, Member, SeedConfig } from '../lib/types'
+import type { AssetInput, Asset, Branding, Classification, Member, SeedConfig } from '../lib/types'
 import { validateConfig } from '../lib/validation'
 
 const CLASSIFICATIONS: Classification[] = ['top', 'middle', 'bottom']
+
+const BRANDING_DEFAULTS: Branding = {
+    logoText: 'HL',
+    brandName: 'Heritage Land',
+    title: 'Land Distribution',
+    tagline: 'Distribution System',
+}
 
 /**
  * Assemble the full {@link SeedConfig} from the split config files:
@@ -43,4 +50,19 @@ export const loadConfig = createServerFn({ method: 'GET' }).handler(async () => 
     const config = await assembleSeedConfig()
     const validation = validateConfig(config)
     return { config, validation }
+})
+
+/**
+ * Load customisable brand strings from `config/branding.json`. Falls back to
+ * sensible defaults if the file is missing or invalid, so the app always renders.
+ */
+export const loadBranding = createServerFn({ method: 'GET' }).handler(async (): Promise<Branding> => {
+    try {
+        const { readFile } = await import('node:fs/promises')
+        const { resolve } = await import('node:path')
+        const raw = await readFile(resolve(process.cwd(), 'config/branding.json'), 'utf-8')
+        return { ...BRANDING_DEFAULTS, ...(JSON.parse(raw) as Partial<Branding>) }
+    } catch {
+        return BRANDING_DEFAULTS
+    }
 })

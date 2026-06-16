@@ -1,6 +1,6 @@
 import jsPDF from 'jspdf'
 import autoTable from 'jspdf-autotable'
-import type { Member, Asset, RevealItem, Classification } from './types'
+import type { Member, Asset, RevealItem, Classification, Branding } from './types'
 
 const CLASS_ORDER: Classification[] = ['top', 'middle', 'bottom']
 
@@ -14,19 +14,22 @@ function assetIndex(assets: Asset[]): Map<string, Asset> {
  * received, grouped by classification, and trigger a download.
  *
  * `items` should already be limited to revealed/awarded entries for the member.
+ * `branding` supplies the document heading (falls back to a default).
  */
 export function exportMemberPdf(opts: {
     member: Member
     items: RevealItem[]
     assets: Asset[]
     committedAt?: string | null
+    branding?: Pick<Branding, 'brandName' | 'title'>
 }) {
-    const { member, items, assets, committedAt } = opts
+    const { member, items, assets, committedAt, branding } = opts
+    const heading = branding ? `${branding.brandName} — ${branding.title}` : 'Heritage Land Distribution'
     const idx = assetIndex(assets)
     const doc = new jsPDF()
 
     doc.setFontSize(16)
-    doc.text('Heritage Land Distribution', 14, 18)
+    doc.text(heading, 14, 18)
     doc.setFontSize(11)
     doc.setTextColor(90)
     doc.text(`Recipient: ${member.name}`, 14, 27)

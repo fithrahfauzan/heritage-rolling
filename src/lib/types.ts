@@ -33,6 +33,18 @@ export interface SeedConfig {
     assets: Asset[]
 }
 
+/** Customisable brand strings, loaded from `config/branding.json`. */
+export interface Branding {
+    /** Short logo text shown in the badge (e.g. "HL"). */
+    logoText: string
+    /** Brand name shown in the nav and login (e.g. "Heritage Land"). */
+    brandName: string
+    /** App title shown on the dashboard hero (e.g. "Land Distribution"). */
+    title: string
+    /** Subtitle shown on the login screen (e.g. "Distribution System"). */
+    tagline: string
+}
+
 export interface ValidationError {
     field: string
     message: string
@@ -51,6 +63,8 @@ export interface RevealItem {
     certificateNumber: string // references Asset.certificateNumber
     classification: Classification
     memberId: string
+    /** True when this document was pinned to this member via `preassignedTo` in config. */
+    preassigned?: boolean
 }
 
 export interface ArchivedRun {

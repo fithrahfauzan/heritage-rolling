@@ -11,11 +11,12 @@ function shuffle<T>(arr: T[], rng: () => number = Math.random): T[] {
     return arr
 }
 
-function item(asset: Asset, memberId: string): RevealItem {
+function item(asset: Asset, memberId: string, preassigned = false): RevealItem {
     return {
         certificateNumber: asset.certificateNumber,
         classification: asset.classification,
         memberId,
+        ...(preassigned ? { preassigned: true } : {}),
     }
 }
 
@@ -37,7 +38,7 @@ function allocateTop(members: Member[], topAssets: Asset[], rng: () => number): 
     const preassigned = topAssets.filter((a) => a.preassignedTo != null)
     for (const asset of preassigned) {
         const memberId = asset.preassignedTo!
-        result.push(item(asset, memberId))
+        result.push(item(asset, memberId, true))
         remaining.set(memberId, (remaining.get(memberId) ?? 0) - 1)
     }
 
@@ -113,4 +114,77 @@ export function summariseAllocation(
         summary[it.memberId]![it.classification]++
     }
     return summary
+}
+
+// ---------------------------------------------------------------------------
+// Incremental allocation — used by the live distribution (decided per spin).
+//
+// Unlike `computeAllocation` (which builds the whole sequence up front, used
+// only by the /debug preview), these helpers let the recipient of each document
+// be chosen at spin time while still guaranteeing the same fairness invariants.
+// ---------------------------------------------------------------------------
+
+const CLASS_ORDER: Classification[] = ['top', 'middle', 'bottom']
+
+/**
+ * The pinned (preassigned) top documents, placed at the start of a run so they
+ * are awarded automatically without spinning.
+ */
+export function preassignedItems(assets: Asset[]): RevealItem[] {
+    return assets
+        .filter((a) => a.classification === 'top' && a.preassignedTo != null)
+        .map((a) => item(a, a.preassignedTo!, true))
+}
+
+/** Members still eligible to receive a document of the given class, given current counts. */
+function eligibleMembers(
+    cls: Classification,
+    classTotal: number,
+    members: Member[],
+    summary: Record<string, Record<Classification, number>>,
+): string[] {
+    const memberCount = members.length
+    const countOf = (id: string) => summary[id]?.[cls] ?? 0
+
+    if (cls === 'top' || cls === 'middle') {
+        const perMember = classTotal / memberCount
+        return members.filter((m) => countOf(m.id) < perMember).map((m) => m.id)
+    }
+
+    // bottom: everyone reaches `base` first; the `classTotal % memberCount`
+    // leftovers then go to distinct members (those still exactly at base).
+    const base = Math.floor(classTotal / memberCount)
+    const belowBase = members.filter((m) => countOf(m.id) < base).map((m) => m.id)
+    if (belowBase.length > 0) return belowBase
+    return members.filter((m) => countOf(m.id) === base).map((m) => m.id)
+}
+
+/**
+ * Decide the next document and its recipient for a live spin.
+ *
+ * Picks the next undistributed document in `top → middle → bottom` order, then
+ * randomly selects an eligible member (one who has not yet hit their fair
+ * share). Returns `null` when every document has been assigned.
+ */
+export function assignNext(
+    members: Member[],
+    assets: Asset[],
+    allocation: RevealItem[],
+    rng: () => number = Math.random,
+): RevealItem | null {
+    const assigned = new Set(allocation.map((i) => i.certificateNumber))
+    const summary = summariseAllocation(members, allocation)
+
+    for (const cls of CLASS_ORDER) {
+        const classAssets = assets.filter((a) => a.classification === cls)
+        const undistributed = classAssets.filter((a) => !assigned.has(a.certificateNumber))
+        if (undistributed.length === 0) continue
+
+        const eligible = eligibleMembers(cls, classAssets.length, members, summary)
+        if (eligible.length === 0) continue
+
+        const memberId = eligible[Math.floor(rng() * eligible.length)]!
+        return item(undistributed[0]!, memberId)
+    }
+    return null
 }

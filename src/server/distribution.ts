@@ -19,8 +19,11 @@ export const startDistribution = createServerFn({ method: 'POST' }).handler(asyn
     return startDistributionLogic(config)
 })
 
-/** Reveal the next asset in the sequence. */
-export const recordSpin = createServerFn({ method: 'POST' }).handler(() => recordSpinLogic())
+/** Assign the next document to a randomly chosen eligible member (decided now). */
+export const recordSpin = createServerFn({ method: 'POST' }).handler(async () => {
+    const { config } = await loadConfig()
+    return recordSpinLogic(config)
+})
 
 /** Archive the committed run and start a fresh draft. */
 export const rerunDistribution = createServerFn({ method: 'POST' }).handler(async () => {

@@ -6,6 +6,10 @@ interface SpinWheelProps {
     targetMemberId: string
     spinning: boolean
     onLanded: (memberId: string) => void
+    /** How long the spin lasts before landing, in milliseconds (default 4000). */
+    durationMs?: number
+    /** Number of full rotations performed before landing (default 5). */
+    spins?: number
 }
 
 // Distinct colors for segments
@@ -24,11 +28,22 @@ function segmentPath(cx: number, cy: number, r: number, startAngle: number, endA
 }
 
 /**
- * Animated SVG wheel of member segments. The result is predetermined: when
- * `spinning` flips true it rotates to land on `targetMemberId`, then calls
- * `onLanded`. The animation is presentation only — it does not pick the winner.
+ * Animated SVG wheel of member segments.
+ *
+ * The winner is chosen by the caller (in this app the server decides it per
+ * spin) and passed in via `targetMemberId`. When `spinning` flips to `true`, the
+ * wheel performs `spins` full rotations over `durationMs` and lands with that
+ * member's segment under the top pointer, then calls `onLanded`. The animation
+ * is presentation only — it never selects the winner itself.
  */
-export function SpinWheel({ members, targetMemberId, spinning, onLanded }: SpinWheelProps) {
+export function SpinWheel({
+    members,
+    targetMemberId,
+    spinning,
+    onLanded,
+    durationMs = 4000,
+    spins = 5,
+}: SpinWheelProps) {
     const size = 320
     const cx = size / 2
     const cy = size / 2
@@ -38,19 +53,24 @@ export function SpinWheel({ members, targetMemberId, spinning, onLanded }: SpinW
     const accRotation = useRef(0)
     const [rotation, setRotation] = useState(0)
     const [isAnimating, setIsAnimating] = useState(false)
-    const animStyleRef = useRef<string>('')
 
     useEffect(() => {
         if (!spinning || isAnimating) return
         const targetIndex = members.findIndex((m) => m.id === targetMemberId)
         if (targetIndex < 0) return
 
-        // Land the pointer (top) on target segment center
-        const targetAngle = targetIndex * segAngle + segAngle / 2
-        const fullSpins = 5 * 360
-        const finalAngle = accRotation.current + fullSpins + (360 - targetAngle)
+        // Segment centers are measured clockwise from the top (pointer) position.
+        const targetCenter = targetIndex * segAngle + segAngle / 2
+        // Rotation (mod 360) needed so the target segment center sits under the pointer.
+        const desiredMod = (360 - (targetCenter % 360)) % 360
 
-        accRotation.current = (finalAngle % 360) + Math.floor(finalAngle / 360) * 360
+        // Add the forward delta from the wheel's *current* resting angle, plus full spins.
+        const current = accRotation.current
+        const currentMod = ((current % 360) + 360) % 360
+        const delta = (desiredMod - currentMod + 360) % 360
+        const finalAngle = current + Math.max(0, spins) * 360 + delta
+
+        accRotation.current = finalAngle
         setRotation(finalAngle)
         setIsAnimating(true)
     }, [spinning]) // eslint-disable-line react-hooks/exhaustive-deps
@@ -63,14 +83,13 @@ export function SpinWheel({ members, targetMemberId, spinning, onLanded }: SpinW
     const animStyle: React.CSSProperties = isAnimating
         ? {
               transform: `rotate(${rotation}deg)`,
-              transition: 'transform 4s cubic-bezier(0.17, 0.67, 0.12, 0.99)',
+              transition: `transform ${durationMs}ms cubic-bezier(0.17, 0.67, 0.12, 0.99)`,
               transformOrigin: `${cx}px ${cy}px`,
           }
         : {
               transform: `rotate(${rotation}deg)`,
               transformOrigin: `${cx}px ${cy}px`,
           }
-    void animStyleRef.current // suppress unused warning
 
     return (
         <div className="relative inline-block" data-testid="spin-wheel">
