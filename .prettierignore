@@ -1,0 +1,18 @@
+# Build output & deps
+node_modules
+dist
+.output
+.nitro
+.tanstack
+.vinxi
+
+# Generated files
+src/routeTree.gen.ts
+
+# Lockfiles & misc
+package-lock.json
+*.log
+.DS_Store
+
+# Runtime state
+data

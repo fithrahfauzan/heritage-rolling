@@ -1,0 +1,41 @@
+# Deployment compose file for Heritage Rolling.
+#   Build & run:  docker compose up -d --build
+#   Logs:         docker compose logs -f
+#   Stop:         docker compose down
+services:
+    app:
+        build:
+            context: .
+            dockerfile: Dockerfile
+        image: heritage-rolling:latest
+        container_name: heritage-rolling
+        restart: unless-stopped
+        ports:
+            # host:container — change the host port if 3000 is taken.
+            - '3000:3000'
+        environment:
+            NODE_ENV: production
+            PORT: 3000
+            # Access password for the app (change for production).
+            APP_PASSWORD: ${APP_PASSWORD:-heritage}
+            # Secret used to seal the session cookie — MUST be ≥ 32 chars in production.
+            SESSION_SECRET: ${SESSION_SECRET:-dev-only-insecure-session-secret-change-me-0001}
+        volumes:
+            # Persist the distribution state (data/distribution.json) across restarts.
+            - heritage-data:/app/data
+            # Edit config/seed.json on the host without rebuilding the image.
+            - ./config:/app/config:ro
+        healthcheck:
+            # Node 22 has a global fetch; exit non-zero if the app isn't serving.
+            test:
+                - CMD
+                - node
+                - -e
+                - "fetch('http://localhost:3000/login').then(r=>process.exit(r.ok?0:1)).catch(()=>process.exit(1))"
+            interval: 30s
+            timeout: 5s
+            retries: 3
+            start_period: 15s
+
+volumes:
+    heritage-data:

@@ -1,0 +1,22 @@
+# Dependencies and build artifacts (reinstalled/regenerated inside the image)
+node_modules
+dist
+.output
+.nitro
+.vinxi
+.tanstack
+
+# Local runtime state (persisted via a Docker volume instead)
+data
+
+# Tooling / VCS / editor noise
+.git
+.gitignore
+.vscode
+*.local
+.DS_Store
+
+# Docker files themselves
+Dockerfile
+docker-compose.yml
+.dockerignore
