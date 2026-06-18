@@ -127,4 +127,35 @@ describe('validateConfig', () => {
             expect(result.errors.some((e) => e.message.includes('Too many preassigned'))).toBe(true)
         })
     })
+
+    describe('compensation mode', () => {
+        it('allows non-divisible top/middle that strict would block', () => {
+            // 3 top / 2 members is not divisible (strict blocks); compensation allows it
+            // provided lower classes can cover compensation: short top = 1 → need 3 middle.
+            const strict = validateConfig({ members, assets: makeAssets(3, 4, 3) })
+            expect(strict.valid).toBe(false)
+
+            const comp = validateConfig({ members, assets: makeAssets(3, 4, 3) }, 'compensation')
+            expect(comp.valid).toBe(true)
+        })
+
+        it('blocks when middle cannot cover top compensation', () => {
+            // 1 top / 2 members → 1 short → needs 3 middle, only 2 provided.
+            const result = validateConfig({ members, assets: makeAssets(1, 2, 9) }, 'compensation')
+            expect(result.valid).toBe(false)
+            expect(result.errors.some((e) => e.message.includes('compensate members missing top'))).toBe(true)
+        })
+
+        it('blocks when bottom cannot cover middle compensation', () => {
+            // 2 top (even, no comp), 3 middle / 2 members → 1 short middle → needs 3 bottom, only 2.
+            const result = validateConfig({ members, assets: makeAssets(2, 3, 2) }, 'compensation')
+            expect(result.valid).toBe(false)
+            expect(result.errors.some((e) => e.message.includes('compensate members missing middle'))).toBe(true)
+        })
+
+        it('does not emit divisibility errors', () => {
+            const result = validateConfig({ members, assets: makeAssets(3, 4, 3) }, 'compensation')
+            expect(result.errors.some((e) => e.message.includes('divisible'))).toBe(false)
+        })
+    })
 })

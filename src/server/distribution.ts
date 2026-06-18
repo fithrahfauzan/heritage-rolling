@@ -15,14 +15,14 @@ export const getDistributionState = createServerFn({ method: 'GET' }).handler(()
 
 /** Start a new distribution run from the seed config. */
 export const startDistribution = createServerFn({ method: 'POST' }).handler(async () => {
-    const { config } = await loadConfig()
-    return startDistributionLogic(config)
+    const { config, settings } = await loadConfig()
+    return startDistributionLogic(config, undefined, settings.allocationMode)
 })
 
 /** Assign the next document to a randomly chosen eligible member (decided now). */
 export const recordSpin = createServerFn({ method: 'POST' }).handler(async () => {
-    const { config } = await loadConfig()
-    return recordSpinLogic(config)
+    const { config, settings } = await loadConfig()
+    return recordSpinLogic(config, undefined, Math.random, settings.allocationMode)
 })
 
 /** Archive the committed run and start a fresh draft. */

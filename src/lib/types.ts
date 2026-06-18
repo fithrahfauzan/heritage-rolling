@@ -1,5 +1,19 @@
 export type Classification = 'top' | 'middle' | 'bottom'
 
+/**
+ * How documents are allocated across members:
+ *
+ * - `strict`   — the original rule. `top` and `middle` counts **must** divide
+ *   evenly by the member count (else the run is blocked); `bottom` allows
+ *   leftovers to distinct members.
+ * - `compensation` — no divisibility requirement. Each class is distributed in
+ *   even cycles; a member who falls short of the would-be even share in a class
+ *   is compensated with `COMPENSATION_FACTOR` (default 3) documents of the next
+ *   lower class, cascading top → middle → bottom. Because 1 top is worth 3
+ *   middle is worth 9 bottom, every member ends with equal total value.
+ */
+export type AllocationMode = 'strict' | 'compensation'
+
 export interface Member {
     id: string
     name: string

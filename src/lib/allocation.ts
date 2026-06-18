@@ -1,6 +1,26 @@
-import type { Member, Asset, Classification, RevealItem } from './types'
+import type { Member, Asset, Classification, RevealItem, AllocationMode } from './types'
 
 export type { RevealItem }
+
+/**
+ * Compensation exchange rate for `compensation` mode: a member who misses one
+ * document of a class is compensated with this many documents of the next lower
+ * class. 3 means 1 top = 3 middle = 9 bottom, which keeps total value equal.
+ */
+export const COMPENSATION_FACTOR = 3
+
+const CLASS_ORDER: Classification[] = ['top', 'middle', 'bottom']
+
+/** Number of assets of a given classification. */
+function classCount(assets: Asset[], cls: Classification): number {
+    return assets.filter((a) => a.classification === cls).length
+}
+
+/** The class processed immediately before `cls`, or null for `top`. */
+function prevClassOf(cls: Classification): Classification | null {
+    const i = CLASS_ORDER.indexOf(cls)
+    return i <= 0 ? null : CLASS_ORDER[i - 1]!
+}
 
 /** Fisher-Yates shuffle (in-place). Accepts a seeded RNG for testability. */
 function shuffle<T>(arr: T[], rng: () => number = Math.random): T[] {
@@ -87,12 +107,31 @@ function allocateWithLeftovers(members: Member[], assets: Asset[], rng: () => nu
 
 /**
  * Compute the ordered reveal sequence.
- * - top: even split honoring `preassignedTo` (caller must ensure divisibility).
- * - middle: even split (caller must ensure divisibility).
- * - bottom: floor per member + random leftover to distinct members.
- * - Order: all top items first, then middle, then bottom.
+ *
+ * - `strict` mode (default): top = even split honoring `preassignedTo`, middle =
+ *   even split (both require divisibility), bottom = floor + random leftovers.
+ * - `compensation` mode: built incrementally via {@link assignNext} so the
+ *   cascading compensation rule applies (see {@link AllocationMode}).
+ *
+ * Order is always all top items first, then middle, then bottom.
  */
-export function computeAllocation(members: Member[], assets: Asset[], rng: () => number = Math.random): RevealItem[] {
+export function computeAllocation(
+    members: Member[],
+    assets: Asset[],
+    rng: () => number = Math.random,
+    mode: AllocationMode = 'strict',
+    factor: number = COMPENSATION_FACTOR,
+): RevealItem[] {
+    if (mode === 'compensation') {
+        let allocation = preassignedItems(assets)
+        for (;;) {
+            const next = assignNext(members, assets, allocation, rng, mode, factor)
+            if (!next) break
+            allocation = [...allocation, next]
+        }
+        return allocation
+    }
+
     const byClass = (cls: Classification) => assets.filter((a) => a.classification === cls)
     return [
         ...allocateTop(members, byClass('top'), rng),
@@ -124,8 +163,6 @@ export function summariseAllocation(
 // be chosen at spin time while still guaranteeing the same fairness invariants.
 // ---------------------------------------------------------------------------
 
-const CLASS_ORDER: Classification[] = ['top', 'middle', 'bottom']
-
 /**
  * The pinned (preassigned) top documents, placed at the start of a run so they
  * are awarded automatically without spinning.
@@ -136,16 +173,84 @@ export function preassignedItems(assets: Asset[]): RevealItem[] {
         .map((a) => item(a, a.preassignedTo!, true))
 }
 
-/** Members still eligible to receive a document of the given class, given current counts. */
+/**
+ * Compensation documents owed to each member at the start of `targetClass`,
+ * derived from how far each fell short of the would-be even share in the
+ * **previous** class's *normal* distribution. `top` is the first class, so it
+ * owes nothing. Cascades recursively (bottom ← middle ← top).
+ */
+function compensationOwed(
+    targetClass: Classification,
+    members: Member[],
+    assets: Asset[],
+    summary: Record<string, Record<Classification, number>>,
+    factor: number,
+): Record<string, number> {
+    const owed: Record<string, number> = {}
+    for (const m of members) owed[m.id] = 0
+
+    const prev = prevClassOf(targetClass)
+    if (!prev) return owed
+
+    const memberCount = members.length
+    const prevOwed = compensationOwed(prev, members, assets, summary, factor)
+    const prevTotalComp = Object.values(prevOwed).reduce((a, b) => a + b, 0)
+    const prevRemaining = Math.max(0, classCount(assets, prev) - prevTotalComp)
+    // The share everyone would have received if the (post-compensation) pool
+    // had divided evenly; members below this were short by the difference.
+    const wouldBeShare = Math.ceil(prevRemaining / memberCount)
+
+    for (const m of members) {
+        const normalShare = (summary[m.id]?.[prev] ?? 0) - (prevOwed[m.id] ?? 0)
+        if (normalShare < wouldBeShare) {
+            owed[m.id] = factor * (wouldBeShare - normalShare)
+        }
+    }
+    return owed
+}
+
+/**
+ * Members still eligible to receive a document of `cls`, given current counts.
+ *
+ * - `strict`: top/middle require everyone reach the exact even share; bottom
+ *   uses floor-then-distinct-leftovers.
+ * - `compensation`: each member's guaranteed share is `compensation owed +
+ *   floor(remaining / members)`; once everyone reaches it, the
+ *   `remaining % members` leftovers go to distinct members.
+ */
 function eligibleMembers(
     cls: Classification,
-    classTotal: number,
     members: Member[],
+    assets: Asset[],
     summary: Record<string, Record<Classification, number>>,
+    mode: AllocationMode,
+    factor: number,
 ): string[] {
     const memberCount = members.length
+    const classTotal = classCount(assets, cls)
     const countOf = (id: string) => summary[id]?.[cls] ?? 0
 
+    if (mode === 'compensation') {
+        const owed = compensationOwed(cls, members, assets, summary, factor)
+        const totalComp = Object.values(owed).reduce((a, b) => a + b, 0)
+        const remaining = Math.max(0, classTotal - totalComp)
+        const base = Math.floor(remaining / memberCount)
+        const target = (id: string) => (owed[id] ?? 0) + base
+
+        // Phase 0 (priority): members still owed compensation receive their
+        // reserved documents first — so a member who missed a higher class is
+        // drawn at the start of this class's spins.
+        const owedFirst = members.filter((m) => countOf(m.id) < (owed[m.id] ?? 0)).map((m) => m.id)
+        if (owedFirst.length > 0) return owedFirst
+
+        const below = members.filter((m) => countOf(m.id) < target(m.id)).map((m) => m.id)
+        if (below.length > 0) return below
+        // Leftover phase: the remaining `remaining % memberCount` docs go to
+        // distinct members currently sitting exactly at their target.
+        return members.filter((m) => countOf(m.id) === target(m.id)).map((m) => m.id)
+    }
+
+    // --- strict mode (original behaviour) ---
     if (cls === 'top' || cls === 'middle') {
         const perMember = classTotal / memberCount
         return members.filter((m) => countOf(m.id) < perMember).map((m) => m.id)
@@ -163,14 +268,16 @@ function eligibleMembers(
  * Decide the next document and its recipient for a live spin.
  *
  * Picks the next undistributed document in `top → middle → bottom` order, then
- * randomly selects an eligible member (one who has not yet hit their fair
- * share). Returns `null` when every document has been assigned.
+ * randomly selects an eligible member (one who has not yet hit their fair share
+ * for the active `mode`). Returns `null` when every document has been assigned.
  */
 export function assignNext(
     members: Member[],
     assets: Asset[],
     allocation: RevealItem[],
     rng: () => number = Math.random,
+    mode: AllocationMode = 'strict',
+    factor: number = COMPENSATION_FACTOR,
 ): RevealItem | null {
     const assigned = new Set(allocation.map((i) => i.certificateNumber))
     const summary = summariseAllocation(members, allocation)
@@ -180,7 +287,7 @@ export function assignNext(
         const undistributed = classAssets.filter((a) => !assigned.has(a.certificateNumber))
         if (undistributed.length === 0) continue
 
-        const eligible = eligibleMembers(cls, classAssets.length, members, summary)
+        const eligible = eligibleMembers(cls, members, assets, summary, mode, factor)
         if (eligible.length === 0) continue
 
         const memberId = eligible[Math.floor(rng() * eligible.length)]!

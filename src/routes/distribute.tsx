@@ -16,7 +16,7 @@ export const Route = createFileRoute('/distribute')({
 const CLS_ORDER: Classification[] = ['top', 'middle', 'bottom']
 
 /** How long the wheel spins (ms) before landing on the chosen member. */
-const SPIN_DURATION_MS = 10000
+const SPIN_DURATION_MS = 1000
 
 const CLS_COLOR: Record<Classification, string> = {
     top: 'bg-amber-100 text-amber-800 border-amber-300',
@@ -118,7 +118,7 @@ function DistributePage() {
     }
 
     return (
-        <main className="mx-auto max-w-6xl space-y-6 p-6">
+        <main className="mx-auto max-w-7xl space-y-6 p-6">
             <div className="flex items-center justify-between">
                 <div>
                     <h1 className="text-2xl font-bold tracking-tight">Distribution</h1>
@@ -185,7 +185,7 @@ function DistributePage() {
                     </Button>
                 </div>
             ) : (
-                <div className="grid gap-6 lg:grid-cols-[auto_1fr] lg:items-start">
+                <div className="grid gap-6 lg:grid-cols-[auto_minmax(28rem,1fr)] lg:items-start">
                     {/* Wheel + controls */}
                     <div className="flex flex-col items-center gap-4">
                         <SpinWheel
@@ -194,6 +194,7 @@ function DistributePage() {
                             spinning={spinning}
                             onLanded={onLanded}
                             durationMs={SPIN_DURATION_MS}
+                            size={440}
                         />
                         <div className="flex items-center gap-3">
                             <Button
@@ -363,7 +364,7 @@ function ResultsBoard({
                         .sort((a, b) => CLS_ORDER.indexOf(a.classification) - CLS_ORDER.indexOf(b.classification))
                     return (
                         <div key={m.id} className="flex items-center gap-3 rounded-lg border bg-card px-3 py-2">
-                            <p className="w-32 shrink-0 truncate text-sm font-medium" title={m.name}>
+                            <p className="w-44 shrink-0 text-sm font-medium leading-tight" title={m.name}>
                                 {m.name}
                             </p>
                             <div className="flex flex-1 flex-wrap gap-1.5">
@@ -384,43 +385,48 @@ function ResultsBoard({
                                                     {item.certificateNumber}
                                                 </span>
                                                 {/* Hover details popover */}
-                                                <div className="pointer-events-none absolute bottom-full left-1/2 z-50 mb-1.5 hidden w-60 max-w-[80vw] -translate-x-1/2 rounded-lg border bg-popover p-3 text-left shadow-xl group-hover/chip:block">
-                                                    <div className="flex items-center justify-between gap-2">
-                                                        <p className="font-mono text-xs font-semibold">
-                                                            {item.certificateNumber}
-                                                        </p>
-                                                        <span
-                                                            className={`rounded-full border px-1.5 py-0.5 text-[10px] capitalize ${CLS_COLOR[item.classification]}`}
-                                                        >
-                                                            {item.classification}
-                                                        </span>
+                                                <div className="pointer-events-none absolute bottom-full left-1/2 z-50 hidden w-60 max-w-[80vw] -translate-x-1/2 pb-1.5 group-hover/chip:block">
+                                                    <div className="rounded-lg border bg-popover p-3 text-left shadow-xl pointer-events-auto">
+                                                        <div className="flex items-center justify-between gap-2">
+                                                            <p className="font-mono text-xs font-semibold">
+                                                                {item.certificateNumber}
+                                                            </p>
+                                                            <span
+                                                                className={`rounded-full border px-1.5 py-0.5 text-[10px] capitalize ${CLS_COLOR[item.classification]}`}
+                                                            >
+                                                                {item.classification}
+                                                            </span>
+                                                        </div>
+                                                        {item.preassigned && (
+                                                            <p className="mt-1 text-[10px] font-medium text-amber-600">
+                                                                📌 Pinned assignment
+                                                            </p>
+                                                        )}
+                                                        <dl className="mt-1.5 space-y-1 text-xs text-muted-foreground">
+                                                            <div className="flex justify-between gap-3">
+                                                                <dt>Owner</dt>
+                                                                <dd className="text-right text-foreground">
+                                                                    {asset?.name ?? '—'}
+                                                                </dd>
+                                                            </div>
+                                                            <div className="flex justify-between gap-3">
+                                                                <dt>Location</dt>
+                                                                <dd className="text-right text-foreground">
+                                                                    {asset?.location ?? '—'}
+                                                                </dd>
+                                                            </div>
+                                                            <div className="flex justify-between gap-3">
+                                                                <dt>Area</dt>
+                                                                <dd className="text-right text-foreground">
+                                                                    {asset ? `${asset.area.toLocaleString()} m²` : '—'}
+                                                                </dd>
+                                                            </div>
+                                                        </dl>
                                                     </div>
-                                                    {item.preassigned && (
-                                                        <p className="mt-1 text-[10px] font-medium text-amber-600">
-                                                            📌 Pinned assignment
-                                                        </p>
-                                                    )}
-                                                    <dl className="mt-1.5 space-y-1 text-xs text-muted-foreground">
-                                                        <div className="flex justify-between gap-3">
-                                                            <dt>Owner</dt>
-                                                            <dd className="text-right text-foreground">
-                                                                {asset?.name ?? '—'}
-                                                            </dd>
-                                                        </div>
-                                                        <div className="flex justify-between gap-3">
-                                                            <dt>Location</dt>
-                                                            <dd className="text-right text-foreground">
-                                                                {asset?.location ?? '—'}
-                                                            </dd>
-                                                        </div>
-                                                        <div className="flex justify-between gap-3">
-                                                            <dt>Area</dt>
-                                                            <dd className="text-right text-foreground">
-                                                                {asset ? `${asset.area.toLocaleString()} m²` : '—'}
-                                                            </dd>
-                                                        </div>
-                                                    </dl>
-                                                    <span className="absolute left-1/2 top-full -translate-x-1/2 border-4 border-transparent border-t-popover" />
+                                                    {/* Arrow bridge — sits in the pb-1.5 padding zone */}
+                                                    <div className="flex justify-center">
+                                                        <span className="border-4 border-transparent border-t-popover" />
+                                                    </div>
                                                 </div>
                                             </div>
                                         )

@@ -12,11 +12,22 @@ through a "spin the wheel" reveal. Documents are classified as **top / middle /
 bottom** and processed in that order. The fair allocation is computed up front;
 the wheel only _reveals_ the predetermined result.
 
-- **Top** and **middle** must divide evenly across members — otherwise the run is
-  blocked with a clear validation error.
-- **Bottom** distributes evenly, with leftover documents randomly assigned to
+The app supports two switchable **allocation modes**, selected at runtime via
+`config/settings.json` (`allocationMode`) or the `ALLOCATION_MODE` env var:
+
+- **`strict`** (default): **top** and **middle** must divide evenly across
+  members — otherwise the run is blocked with a clear validation error.
+  **bottom** distributes evenly, with leftover documents randomly assigned to
   distinct members.
-- Members and land documents are defined in a JSON seed file.
+- **`compensation`**: no divisibility requirement. A member who falls short of
+  the would-be even share in a class is compensated with `COMPENSATION_FACTOR`
+  (= 3) documents of the next lower class, cascading top → middle → bottom. The
+  run is only blocked if a lower class is too small to pay the compensation it
+  owes.
+
+Other invariants (shared by both modes):
+
+- Members and land documents are defined in JSON config files.
 - The final distribution persists on the server and is locked once committed,
   with a guarded rerun flow that archives the previous result.
 - The app is gated behind a single shared **password**.
@@ -48,6 +59,8 @@ See `src/lib/types.ts` for the authoritative definitions.
 - `Asset` (a land document): `{ certificateNumber /* primary key */,
 name /* owner of the document */, location, area /* m² */, classification }`
 - `Classification`: `'top' | 'middle' | 'bottom'`
+- `AllocationMode`: `'strict' | 'compensation'` — selects the allocation rule
+  (see §4); resolved from `config/settings.json` / `ALLOCATION_MODE`.
 - `RevealItem`: `{ certificateNumber, classification, memberId }` — one entry per
   document, in reveal order (top → middle → bottom).
 - `DistributionState`: `{ status, allocation, revealedCount, startedAt,
@@ -62,27 +75,57 @@ Two code paths share the same fairness rules:
 - `assignNext` / `preassignedItems` (same file) drive the **live distribution**:
   the recipient of each document is decided **per spin**, not precomputed.
 
-Rules:
+Both honor the active `AllocationMode` (`strict` | `compensation`), resolved by
+`readSettings()` and threaded through `loadConfig` → server functions →
+`assignNext` / `validateConfig`. The default is `strict`.
+
+Common to both modes:
 
 - Group documents by classification; process **top → middle → bottom**.
-- **top**: even split per member. Documents with `preassignedTo` (member id) are
-  **placed automatically when the run starts** (no spin) and **count toward that
-  member's quota** — a member pinned to their full share receives no further top
-  documents. Pinned items carry `preassigned: true` on the `RevealItem` and show a
-  📌 badge. Validation blocks over-allocation and non-top preassignments.
-- **middle**: even split; `count % memberCount` must be 0 (else blocked).
-- **bottom**: each member gets `floor(count / memberCount)`; the
-  `count % memberCount` leftovers go to randomly chosen **distinct** members
-  (+1 each).
+- `preassignedTo` (top-only): pinned documents are **placed automatically when
+  the run starts** (no spin) and **count toward that member's top quota**. Pinned
+  items carry `preassigned: true` and show a 📌 badge. Validation blocks
+  over-allocation and non-top preassignments.
 - For each live spin, `assignNext` picks the next undistributed document (in
-  order) and a random member among those still **eligible** (under their fair
-  share). The wheel animates to the member the server just chose.
+  order) and a random member among those still **eligible**. The wheel animates
+  to the member the server just chose.
+
+### `strict` mode
+
+- **top / middle**: exact even split; `count % memberCount` must be 0 (else the
+  run is blocked at validation).
+- **bottom**: each member gets `floor(count / memberCount)`; the
+  `count % memberCount` leftovers go to randomly chosen **distinct** members.
+
+### `compensation` mode
+
+- For each class, a compensation pool is **reserved first**: every member who
+  fell short of the would-be even share in the previous class is owed
+  `COMPENSATION_FACTOR` (= 3) documents (`compensationOwed`, cascading
+  recursively bottom ← middle ← top; `top` owes nothing). In the live draw these
+  owed members are drawn **first** within the class, so a member who missed a
+  higher class receives their compensation at the start of the next class's spins.
+- The **remaining** documents are then distributed evenly across **all** members
+  (compensated members included): everyone reaches `floor(remaining /
+memberCount)`, then `remaining % memberCount` leftovers go to distinct members.
+- A member who only reaches the floor (does not win a leftover) is "short" and is
+  compensated in the next class. Because the 3× rate equals the value ratio
+  (1 top = 3 middle = 9 bottom), every member ends with **equal total value**.
+- Validation requires each lower class to hold enough documents to pay the
+  compensation owed by the class above it; otherwise the run is blocked.
+
+> Worked example — 15 members, 14 top / 19 middle / 57 bottom:
+> 1 member misses top → +3 middle (reserved), the other 14 each get 1 top.
+> Middle: reserve 3, distribute the remaining 16 evenly (everyone +1, 1 leftover
+> spins) → 14 members fall short of the 2nd middle cycle → +3 bottom each.
+> Bottom: reserve 42, distribute the remaining 15 evenly. Every member ends at
+> 16 value points.
 
 ## 5. Architecture
 
 ```mermaid
 flowchart TD
-    Cfg["config/members.json\nconfig/assets/top|middle|bottom.json"] --> CfgFn[assembleSeedConfig + validateConfig]
+    Cfg["config/members.json\nconfig/assets/top|middle|bottom.json\nconfig/settings.json"] --> CfgFn[assembleSeedConfig + readSettings + validateConfig]
     CfgFn --> SrvFns[server fns: getDistributionState / startDistribution\nrecordSpin / rerunDistribution]
     SrvFns --> Alloc[allocation.ts — assignNext picks recipient per spin]
     SrvFns <--> Store[(data/distribution.json\nstate + allocation + archive)]
@@ -112,7 +155,7 @@ stateDiagram-v2
     in_progress --> in_progress: recordSpin (assign next, decided live)
     in_progress --> committed: final document assigned
     committed --> draft: rerunDistribution (archive + restart)
-    empty --> blocked: validation fails (top/middle not divisible)
+    empty --> blocked: validation fails (strict: top/middle not divisible;\ncompensation: lower class too small to compensate)
 ```
 
 ## 7. Routes & Auth
@@ -129,6 +172,8 @@ visitors to `/login`.
   member-per-row board fills in. Pinned documents are placed automatically at the
   start (📌 badge). Includes manual **Spin** + **Auto-play** and a guarded rerun
   dialog. (PDF export lives on the report page.)
+- `/assets` — land documents grouped by classification (Top / Middle / Bottom),
+  collapsible accordion tables with certificate number, owner, location, and area.
 - `/report` — committed distribution summary per member, with per-member and
   bulk PDF export.
 - `/debug` — prints the computed allocation and per-member tallies. Reachable by
@@ -149,6 +194,7 @@ Missing/invalid file falls back to built-in defaults.
 config/
   members.json              # member list (id, name)
   branding.json             # brand strings (logoText, brandName, title, tagline)
+  settings.json             # { "allocationMode": "strict" | "compensation" }
   assets/
     top.json                # top-tier documents (preassignedTo optional)
     middle.json             # middle-tier documents

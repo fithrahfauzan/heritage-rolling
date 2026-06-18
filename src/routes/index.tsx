@@ -28,7 +28,7 @@ const CLS_STYLE: Record<Classification, { bar: string; text: string; badge: stri
 }
 
 function Home() {
-    const [{ config, validation }, distState] = Route.useLoaderData()
+    const [{ config, settings, validation }, distState] = Route.useLoaderData()
     const branding = useLoaderData({ from: '__root__' })
     const status = distState.status
     const meta = STATUS_META[status]
@@ -135,9 +135,9 @@ function Home() {
                             </div>
                         </CardHeader>
                         <CardContent>
-                            <ul className="grid grid-cols-2 gap-x-4 gap-y-1 text-sm">
+                            <ul className="space-y-1 text-sm">
                                 {config.members.map((m) => (
-                                    <li key={m.id} className="flex items-center gap-1.5 truncate">
+                                    <li key={m.id} className="flex items-center gap-1.5">
                                         <span className="h-1.5 w-1.5 shrink-0 rounded-full bg-emerald-400" />
                                         {m.name}
                                     </li>
@@ -161,8 +161,8 @@ function Home() {
                                 const items = config.assets.filter((a) => a.classification === cls)
                                 const preassigned = items.filter((a) => a.preassignedTo).length
                                 const perMember =
-                                    cls === 'bottom'
-                                        ? `~${Math.floor(items.length / config.members.length)}`
+                                    cls === 'bottom' || settings.allocationMode === 'compensation'
+                                        ? `~${Math.ceil(items.length / config.members.length)}`
                                         : String(items.length / config.members.length)
                                 const pct = Math.round((items.length / totalDocs) * 100)
                                 return (

@@ -69,6 +69,7 @@ function NavBar() {
 
     const links = [
         { to: '/', label: 'Home' },
+        { to: '/assets', label: 'Assets' },
         { to: '/distribute', label: 'Distribute' },
         { to: '/report', label: 'Report' },
     ] as const

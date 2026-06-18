@@ -1,182 +1,116 @@
 [
     {
-        "certificateNumber": "SHM-0016",
-        "name": "Sjahrir",
-        "location": "Jl. Pahlawan No. 113, Jakarta",
-        "area": 1192
+        "certificateNumber": "AJB 018/2008",
+        "name": "H. Daday Hudaya",
+        "location": "Dawuan, Karawang",
+        "area": 130
     },
     {
-        "certificateNumber": "SHM-0017",
-        "name": "Dewantara",
-        "location": "Jl. Melati No. 120, Bogor",
-        "area": 1229
+        "certificateNumber": "SHM 03900",
+        "name": "Wati",
+        "location": "Cikampek, Karawang",
+        "area": 165
     },
     {
-        "certificateNumber": "SHM-0018",
-        "name": "Ranggawarsita",
-        "location": "Jl. Mawar No. 127, Bandung",
-        "area": 1266
+        "certificateNumber": "SHM 05369",
+        "name": "Rasad",
+        "location": "Karawang Kulon, Karawang",
+        "area": 84
     },
     {
-        "certificateNumber": "SHM-0019",
-        "name": "Yos Sudarso",
-        "location": "Jl. Kenanga No. 134, Bekasi",
-        "area": 1303
+        "certificateNumber": "SHM 00167",
+        "name": "Saanen",
+        "location": "Mekarmulya, Karawang",
+        "area": 1004
     },
     {
-        "certificateNumber": "SHM-0020",
-        "name": "Pierre Tendean",
-        "location": "Jl. Cendana No. 141, Depok",
-        "area": 1340
+        "certificateNumber": "AJB 1000 m2",
+        "name": "H. Daday Hudaya",
+        "location": "Pasir Gombong, Bekasi",
+        "area": 1000
     },
     {
-        "certificateNumber": "SHM-0021",
-        "name": "Soekarno",
-        "location": "Jl. Merdeka No. 148, Tangerang",
-        "area": 1377
+        "certificateNumber": "APHB",
+        "name": "H. Daday Hudaya",
+        "location": "Pasir Gombong, Bekasi",
+        "area": 8784
     },
     {
-        "certificateNumber": "SHM-0022",
-        "name": "Hatta",
-        "location": "Jl. Sudirman No. 155, Surabaya",
-        "area": 1014
+        "certificateNumber": "Hibah 678/1997",
+        "name": "Siti",
+        "location": "Sukaindah, Bekasi",
+        "area": 1860
     },
     {
-        "certificateNumber": "SHM-0023",
-        "name": "Sudirman",
-        "location": "Jl. Diponegoro No. 162, Semarang",
-        "area": 1051
+        "certificateNumber": "SHM 01130",
+        "name": "Neran",
+        "location": "Sukajadi, Bekasi",
+        "area": 450
     },
     {
-        "certificateNumber": "SHM-0024",
-        "name": "Kartini",
-        "location": "Jl. Gajah Mada No. 169, Yogyakarta",
-        "area": 1088
+        "certificateNumber": "SHM 01398",
+        "name": "Wanda",
+        "location": "Karangsentosa, Bekasi",
+        "area": 154
     },
     {
-        "certificateNumber": "SHM-0025",
-        "name": "Diponegoro",
-        "location": "Jl. Ahmad Yani No. 176, Malang",
-        "area": 1125
+        "certificateNumber": "AJB 1850&1851/2018",
+        "name": "H. Daday Hudaya",
+        "location": "Sukaharja, Bogor",
+        "area": 15000
     },
     {
-        "certificateNumber": "SHM-0026",
-        "name": "Cut Nyak Dien",
-        "location": "Jl. Pahlawan No. 183, Medan",
-        "area": 1162
+        "certificateNumber": "AJB 119/2012",
+        "name": "Ade",
+        "location": "Sukaharja, Bogor",
+        "area": 8300
     },
     {
-        "certificateNumber": "SHM-0027",
-        "name": "Hasanuddin",
-        "location": "Jl. Melati No. 190, Makassar",
-        "area": 1199
+        "certificateNumber": "AJB 108/2012",
+        "name": "Ade",
+        "location": "Sukaharja, Bogor",
+        "area": 7200
     },
     {
-        "certificateNumber": "SHM-0028",
-        "name": "Pattimura",
-        "location": "Jl. Mawar No. 197, Denpasar",
-        "area": 1236
+        "certificateNumber": "AJB 729/2016",
+        "name": "Fahmi",
+        "location": "Sukarasa, Bogor",
+        "area": 443
     },
     {
-        "certificateNumber": "SHM-0029",
-        "name": "Imam Bonjol",
-        "location": "Jl. Kenanga No. 204, Solo",
-        "area": 1273
+        "certificateNumber": "AJB 26-37/2014",
+        "name": "Aldi",
+        "location": "Pasanggrahan, Purwakarta",
+        "area": 42069
     },
     {
-        "certificateNumber": "SHM-0030",
-        "name": "Wahidin",
-        "location": "Jl. Cendana No. 211, Cirebon",
-        "area": 1310
+        "certificateNumber": "SHM 00710",
+        "name": "Wawan",
+        "location": "Suntenjaya, Bandung",
+        "area": 3035
     },
     {
-        "certificateNumber": "SHM-0031",
-        "name": "Agus Salim",
-        "location": "Jl. Merdeka No. 218, Jakarta",
-        "area": 1347
+        "certificateNumber": "SHM 00708",
+        "name": "Wawan",
+        "location": "Suntenjaya, Bandung",
+        "area": 3706
     },
     {
-        "certificateNumber": "SHM-0032",
-        "name": "Ki Hajar",
-        "location": "Jl. Sudirman No. 225, Bogor",
-        "area": 1384
+        "certificateNumber": "SHM 00709",
+        "name": "Meriah",
+        "location": "Suntenjaya, Bandung",
+        "area": 3462
     },
     {
-        "certificateNumber": "SHM-0033",
-        "name": "Tjokroaminoto",
-        "location": "Jl. Diponegoro No. 232, Bandung",
-        "area": 1021
+        "certificateNumber": "SHM 140",
+        "name": "Hariri",
+        "location": "Terate, Serang",
+        "area": 10000
     },
     {
-        "certificateNumber": "SHM-0034",
-        "name": "Sutomo",
-        "location": "Jl. Gajah Mada No. 239, Bekasi",
-        "area": 1058
-    },
-    {
-        "certificateNumber": "SHM-0035",
-        "name": "Juanda",
-        "location": "Jl. Ahmad Yani No. 246, Depok",
-        "area": 1095
-    },
-    {
-        "certificateNumber": "SHM-0036",
-        "name": "Sjahrir",
-        "location": "Jl. Pahlawan No. 3, Tangerang",
-        "area": 1132
-    },
-    {
-        "certificateNumber": "SHM-0037",
-        "name": "Dewantara",
-        "location": "Jl. Melati No. 10, Surabaya",
-        "area": 1169
-    },
-    {
-        "certificateNumber": "SHM-0038",
-        "name": "Ranggawarsita",
-        "location": "Jl. Mawar No. 17, Semarang",
-        "area": 1206
-    },
-    {
-        "certificateNumber": "SHM-0039",
-        "name": "Yos Sudarso",
-        "location": "Jl. Kenanga No. 24, Yogyakarta",
-        "area": 1243
-    },
-    {
-        "certificateNumber": "SHM-0040",
-        "name": "Pierre Tendean",
-        "location": "Jl. Cendana No. 31, Malang",
-        "area": 1280
-    },
-    {
-        "certificateNumber": "SHM-0041",
-        "name": "Soekarno",
-        "location": "Jl. Merdeka No. 38, Medan",
-        "area": 1317
-    },
-    {
-        "certificateNumber": "SHM-0042",
-        "name": "Hatta",
-        "location": "Jl. Sudirman No. 45, Makassar",
-        "area": 1354
-    },
-    {
-        "certificateNumber": "SHM-0043",
-        "name": "Sudirman",
-        "location": "Jl. Diponegoro No. 52, Denpasar",
-        "area": 1391
-    },
-    {
-        "certificateNumber": "SHM-0044",
-        "name": "Kartini",
-        "location": "Jl. Gajah Mada No. 59, Solo",
-        "area": 1028
-    },
-    {
-        "certificateNumber": "SHM-0045",
-        "name": "Diponegoro",
-        "location": "Jl. Ahmad Yani No. 66, Cirebon",
-        "area": 1065
+        "certificateNumber": "HP 117.118.130",
+        "name": "Indrayani",
+        "location": "Ciater, Subang",
+        "area": 4250
     }
 ]

@@ -6,9 +6,9 @@ import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
 import type { Classification } from '@/lib/types'
 
 const getDebugAllocation = createServerFn({ method: 'GET' }).handler(async () => {
-    const { config, validation } = await loadConfig()
+    const { config, settings, validation } = await loadConfig()
     if (!validation.valid) return { error: validation.errors, allocation: null, summary: null, config }
-    const allocation = computeAllocation(config.members, config.assets)
+    const allocation = computeAllocation(config.members, config.assets, Math.random, settings.allocationMode)
     const summary = summariseAllocation(config.members, allocation)
     return { error: null, allocation, summary, config }
 })

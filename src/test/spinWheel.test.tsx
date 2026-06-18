@@ -16,11 +16,11 @@ describe('SpinWheel', () => {
         expect(document.querySelectorAll('[data-memberid]')).toHaveLength(3)
     })
 
-    it('shows member first names on the wheel', () => {
+    it('shows member wheel labels on the wheel', () => {
         render(<SpinWheel members={members} targetMemberId="m1" spinning={false} onLanded={vi.fn()} />)
-        expect(screen.getByText('Alice')).toBeTruthy()
-        expect(screen.getByText('Bob')).toBeTruthy()
-        expect(screen.getByText('Carol')).toBeTruthy()
+        expect(screen.getByText('Alice Sm..')).toBeTruthy()
+        expect(screen.getByText('Bob Jo..')).toBeTruthy()
+        expect(screen.getByText('Carol Le..')).toBeTruthy()
     })
 
     it('calls onLanded with targetMemberId after transitionend', () => {

@@ -8,7 +8,7 @@
  * `filePath` (and `rng`) are injectable for tests. State machine:
  * empty → draft → in_progress → committed → (rerun) draft.
  */
-import type { DistributionState, SeedConfig } from '../lib/types'
+import type { DistributionState, SeedConfig, AllocationMode } from '../lib/types'
 import { validateConfig } from '../lib/validation'
 import { assignNext, preassignedItems } from '../lib/allocation'
 import { readState, writeState } from './store'
@@ -33,8 +33,12 @@ function freshRun(config: SeedConfig, archive: DistributionState['archive']): Di
  * remaining recipients are decided later, one per spin. Throws if validation
  * fails or a run is already in progress / committed.
  */
-export async function startDistributionLogic(config: SeedConfig, filePath?: string): Promise<DistributionState> {
-    const validation = validateConfig(config)
+export async function startDistributionLogic(
+    config: SeedConfig,
+    filePath?: string,
+    mode: AllocationMode = 'strict',
+): Promise<DistributionState> {
+    const validation = validateConfig(config, mode)
     if (!validation.valid) {
         throw new Error(validation.errors.map((e) => e.message).join('; '))
     }
@@ -58,6 +62,7 @@ export async function recordSpinLogic(
     config: SeedConfig,
     filePath?: string,
     rng: () => number = Math.random,
+    mode: AllocationMode = 'strict',
 ): Promise<DistributionState> {
     const state = await readState(filePath)
     if (state.status !== 'draft' && state.status !== 'in_progress') {
@@ -68,7 +73,7 @@ export async function recordSpinLogic(
         throw new Error('All documents already assigned')
     }
 
-    const next = assignNext(config.members, config.assets, state.allocation, rng)
+    const next = assignNext(config.members, config.assets, state.allocation, rng, mode)
     if (!next) throw new Error('No document left to assign')
 
     const allocation = [...state.allocation, next]

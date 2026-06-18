@@ -1,18 +1,36 @@
-import type { SeedConfig, ValidationResult } from './types'
+import type { SeedConfig, ValidationResult, AllocationMode } from './types'
+import { COMPENSATION_FACTOR } from './allocation'
 
 const VALID_CLASSIFICATIONS = new Set(['top', 'middle', 'bottom'])
 
 /**
+ * Members who fall short of the would-be even share of `count` documents across
+ * `memberCount` members — i.e. those left at the floor when there is a
+ * remainder. Used to size compensation pools.
+ */
+function shortCount(count: number, memberCount: number): number {
+    if (memberCount <= 0) return 0
+    const remainder = count % memberCount
+    return remainder === 0 ? 0 : memberCount - remainder
+}
+
+/**
  * Validate a seed config before it is used to compute an allocation.
  *
- * Checks (in order): non-empty members/assets, unique member & certificate
- * numbers, valid classifications, the divisibility rule (`top`/`middle` counts
- * must each divide evenly by member count; bottom may have leftovers), and the
- * top-only preassignment rules (valid member, top-only, within the member's
- * top quota). Returns all problems found rather than throwing, so the UI can
- * list them.
+ * Shared checks (both modes): non-empty members/assets, unique member &
+ * certificate numbers, valid classifications, and the top-only preassignment
+ * rules (valid member, top-only, within the member's top quota).
+ *
+ * Mode-specific:
+ * - `strict`: `top`/`middle` counts must each divide evenly by member count
+ *   (`bottom` may have leftovers).
+ * - `compensation`: no divisibility requirement; instead each lower class must
+ *   hold enough documents to pay the compensation owed by the class above
+ *   (1 short document → `COMPENSATION_FACTOR` documents in the next class).
+ *
+ * Returns all problems found rather than throwing, so the UI can list them.
  */
-export function validateConfig(config: SeedConfig): ValidationResult {
+export function validateConfig(config: SeedConfig, mode: AllocationMode = 'strict'): ValidationResult {
     const errors: ValidationResult['errors'] = []
 
     if (!config.members || config.members.length === 0) {
@@ -56,19 +74,40 @@ export function validateConfig(config: SeedConfig): ValidationResult {
     const memberCount = config.members.length
     const topCount = config.assets.filter((a) => a.classification === 'top').length
     const middleCount = config.assets.filter((a) => a.classification === 'middle').length
+    const bottomCount = config.assets.filter((a) => a.classification === 'bottom').length
 
-    if (topCount % memberCount !== 0) {
-        errors.push({
-            field: 'assets',
-            message: `Top assets (${topCount}) must be evenly divisible by member count (${memberCount})`,
-        })
-    }
+    if (mode === 'strict') {
+        if (topCount % memberCount !== 0) {
+            errors.push({
+                field: 'assets',
+                message: `Top assets (${topCount}) must be evenly divisible by member count (${memberCount})`,
+            })
+        }
 
-    if (middleCount % memberCount !== 0) {
-        errors.push({
-            field: 'assets',
-            message: `Middle assets (${middleCount}) must be evenly divisible by member count (${memberCount})`,
-        })
+        if (middleCount % memberCount !== 0) {
+            errors.push({
+                field: 'assets',
+                message: `Middle assets (${middleCount}) must be evenly divisible by member count (${memberCount})`,
+            })
+        }
+    } else {
+        // compensation: each lower class must cover the compensation owed by the
+        // class above it (1 missed document → COMPENSATION_FACTOR documents).
+        const middleComp = COMPENSATION_FACTOR * shortCount(topCount, memberCount)
+        if (middleCount < middleComp) {
+            errors.push({
+                field: 'assets',
+                message: `Middle assets (${middleCount}) are too few to compensate members missing top (${middleComp} needed)`,
+            })
+        }
+        const middleRemaining = Math.max(0, middleCount - middleComp)
+        const bottomComp = COMPENSATION_FACTOR * shortCount(middleRemaining, memberCount)
+        if (bottomCount < bottomComp) {
+            errors.push({
+                field: 'assets',
+                message: `Bottom assets (${bottomCount}) are too few to compensate members missing middle (${bottomComp} needed)`,
+            })
+        }
     }
 
     // --- Preassignment rules (top documents only) ---
@@ -92,8 +131,11 @@ export function validateConfig(config: SeedConfig): ValidationResult {
     }
 
     // A member cannot be preassigned more top documents than their fair share.
-    if (topCount % memberCount === 0) {
-        const perMemberTop = topCount / memberCount
+    // strict: exact even share (only meaningful when divisible). compensation:
+    // the most any member could receive is ceil(top / members).
+    const quotaCheckable = mode === 'compensation' || topCount % memberCount === 0
+    if (quotaCheckable) {
+        const perMemberTop = mode === 'compensation' ? Math.ceil(topCount / memberCount) : topCount / memberCount
         const preCounts: Record<string, number> = {}
         for (const a of preassigned) {
             if (a.classification === 'top' && memberIdSet.has(a.preassignedTo!)) {

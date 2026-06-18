@@ -10,6 +10,8 @@ interface SpinWheelProps {
     durationMs?: number
     /** Number of full rotations performed before landing (default 5). */
     spins?: number
+    /** Diameter of the wheel in pixels (default 320). */
+    size?: number
 }
 
 // Distinct colors for segments
@@ -25,6 +27,26 @@ function segmentPath(cx: number, cy: number, r: number, startAngle: number, endA
     const end = polarToXY(cx, cy, r, endAngle)
     const largeArc = endAngle - startAngle > 180 ? 1 : 0
     return `M ${cx} ${cy} L ${start.x} ${start.y} A ${r} ${r} 0 ${largeArc} 1 ${end.x} ${end.y} Z`
+}
+
+// Honorific prefixes to skip when choosing a short display label for the wheel.
+const HONORIFICS = new Set(['hj.', 'hj', 'h.', 'h', 'dr.', 'dr', 'ir.', 'ir', 'drs.', 'drs', 's.h', 's.h.'])
+
+/**
+ * Returns a short wheel label: full first meaningful word + first 2 chars of
+ * the next word + "..". e.g.:
+ *   "Hj. Nia Seniawati"          → "Nia Se.."
+ *   "Arief Fitriansah Pratama"   → "Arief Fi.."
+ *   "Muhammad Aryadillah"        → "Muhammad Ar.."
+ *   "Panji Ramadhan"             → "Panji Ra.."
+ *   single meaningful word       → that word as-is
+ */
+function wheelLabel(name: string): string {
+    const words = name.split(/\s+/).map((w) => w.replace(/,+$/, ''))
+    const meaningful = words.filter((w) => !HONORIFICS.has(w.toLowerCase()))
+    if (meaningful.length === 0) return words[0]!
+    if (meaningful.length === 1) return meaningful[0]!
+    return `${meaningful[0]} ${meaningful[1]!.slice(0, 2)}..`
 }
 
 /**
@@ -43,8 +65,8 @@ export function SpinWheel({
     onLanded,
     durationMs = 4000,
     spins = 5,
+    size = 320,
 }: SpinWheelProps) {
-    const size = 320
     const cx = size / 2
     const cy = size / 2
     const r = size / 2 - 10
@@ -97,9 +119,9 @@ export function SpinWheel({
             <div
                 className="absolute left-1/2 -translate-x-1/2 top-0 z-10 w-0 h-0"
                 style={{
-                    borderLeft: '10px solid transparent',
-                    borderRight: '10px solid transparent',
-                    borderTop: '24px solid #1f2937',
+                    borderLeft: `${Math.round(size * 0.031)}px solid transparent`,
+                    borderRight: `${Math.round(size * 0.031)}px solid transparent`,
+                    borderTop: `${Math.round(size * 0.075)}px solid #1f2937`,
                 }}
             />
 
@@ -108,8 +130,15 @@ export function SpinWheel({
                     {members.map((member, i) => {
                         const startAngle = i * segAngle
                         const endAngle = (i + 1) * segAngle
-                        const mid = polarToXY(cx, cy, r * 0.65, startAngle + segAngle / 2)
+                        const midAngle = startAngle + segAngle / 2
+                        const mid = polarToXY(cx, cy, r * 0.62, midAngle)
                         const color = COLORS[i % COLORS.length]!
+                        // Rotate text radially. SVG rotate=0 points right; our angles are
+                        // clockwise-from-top, so subtract 90. Flip bottom-half (>180°) so
+                        // text is never upside down.
+                        const svgAngle = midAngle - 90
+                        const flip = midAngle > 180 && midAngle < 360
+                        const textRotate = flip ? svgAngle + 180 : svgAngle
                         return (
                             <g key={member.id} data-memberid={member.id}>
                                 <path
@@ -123,17 +152,18 @@ export function SpinWheel({
                                     y={mid.y}
                                     textAnchor="middle"
                                     dominantBaseline="middle"
-                                    fontSize={members.length > 4 ? 11 : 13}
+                                    fontSize={(members.length > 4 ? 11 : 13) * (size / 320)}
                                     fontWeight="600"
                                     fill="white"
+                                    transform={`rotate(${textRotate}, ${mid.x}, ${mid.y})`}
                                     style={{ pointerEvents: 'none', userSelect: 'none' }}
                                 >
-                                    {member.name.split(' ')[0]}
+                                    {wheelLabel(member.name)}
                                 </text>
                             </g>
                         )
                     })}
-                    <circle cx={cx} cy={cy} r={18} fill="white" stroke="#e5e7eb" strokeWidth={2} />
+                    <circle cx={cx} cy={cy} r={size * 0.056} fill="white" stroke="#e5e7eb" strokeWidth={2} />
                 </g>
             </svg>
         </div>

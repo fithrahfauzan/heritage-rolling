@@ -1,93 +1,86 @@
 [
     {
-        "certificateNumber": "SHM-0001",
-        "name": "Soekarno",
-        "location": "Jl. Merdeka No. 8, Jakarta",
-        "area": 537,
-        "preassignedTo": "m1"
+        "certificateNumber": "AJB 2015 m2",
+        "name": "H. Daday Hudaya",
+        "location": "Mulyasari, Tasikmalaya",
+        "area": 2015
     },
     {
-        "certificateNumber": "SHM-0002",
-        "name": "Hatta",
-        "location": "Jl. Sudirman No. 15, Bogor",
-        "area": 574
+        "certificateNumber": "AJB 389/1998",
+        "name": "H. Daday Hudaya",
+        "location": "Mulyasari, Tasikmalaya",
+        "area": 344
     },
     {
-        "certificateNumber": "SHM-0003",
-        "name": "Sudirman",
-        "location": "Jl. Diponegoro No. 22, Bandung",
-        "area": 611
+        "certificateNumber": "AJB 426/1998",
+        "name": "H. Daday Hudaya",
+        "location": "Mulyasari, Tasikmalaya",
+        "area": 372
     },
     {
-        "certificateNumber": "SHM-0004",
-        "name": "Kartini",
-        "location": "Jl. Gajah Mada No. 29, Bekasi",
-        "area": 648
+        "certificateNumber": "AJB 200-2001/2006",
+        "name": "H. Daday Hudaya",
+        "location": "Setiamulya, Tasikmalaya",
+        "area": 1946
     },
     {
-        "certificateNumber": "SHM-0005",
-        "name": "Diponegoro",
-        "location": "Jl. Ahmad Yani No. 36, Depok",
-        "area": 685
+        "certificateNumber": "AJB 155/2010",
+        "name": "H. Daday Hudaya",
+        "location": "Setiamulya, Tasikmalaya",
+        "area": 672
     },
     {
-        "certificateNumber": "SHM-0006",
-        "name": "Cut Nyak Dien",
-        "location": "Jl. Pahlawan No. 43, Tangerang",
-        "area": 722
+        "certificateNumber": "AJB 156/2010",
+        "name": "H. Daday Hudaya",
+        "location": "Setiamulya, Tasikmalaya",
+        "area": 406
     },
     {
-        "certificateNumber": "SHM-0007",
-        "name": "Hasanuddin",
-        "location": "Jl. Melati No. 50, Surabaya",
-        "area": 759
+        "certificateNumber": "AJB 152/2010",
+        "name": "H. Daday Hudaya",
+        "location": "Setiamulya, Tasikmalaya",
+        "area": 168
     },
     {
-        "certificateNumber": "SHM-0008",
-        "name": "Pattimura",
-        "location": "Jl. Mawar No. 57, Semarang",
-        "area": 796
+        "certificateNumber": "AJB 289,296,299/2007",
+        "name": "H. Daday Hudaya",
+        "location": "Tamansari, Tasikmalaya",
+        "area": 5236
     },
     {
-        "certificateNumber": "SHM-0009",
-        "name": "Imam Bonjol",
-        "location": "Jl. Kenanga No. 64, Yogyakarta",
-        "area": 833
+        "certificateNumber": "SHM 185",
+        "name": "Dudung",
+        "location": "Setiamulya, Tasikmalaya",
+        "area": 357
     },
     {
-        "certificateNumber": "SHM-0010",
-        "name": "Wahidin",
-        "location": "Jl. Cendana No. 71, Malang",
-        "area": 870
+        "certificateNumber": "SHM 00291",
+        "name": "Nunu nugraha",
+        "location": "Tamanjaya, Tasikmalaya",
+        "area": 280
     },
     {
-        "certificateNumber": "SHM-0011",
-        "name": "Agus Salim",
-        "location": "Jl. Merdeka No. 78, Medan",
-        "area": 507
+        "certificateNumber": "SHM 00759",
+        "name": "Kosim",
+        "location": "Karangsari, Pangandaran",
+        "area": 5128
     },
     {
-        "certificateNumber": "SHM-0012",
-        "name": "Ki Hajar",
-        "location": "Jl. Sudirman No. 85, Makassar",
-        "area": 544
+        "certificateNumber": "SHM 00822",
+        "name": "Nana",
+        "location": "Karangsari, Pangandaran",
+        "area": 6133
     },
     {
-        "certificateNumber": "SHM-0013",
-        "name": "Tjokroaminoto",
-        "location": "Jl. Diponegoro No. 92, Denpasar",
-        "area": 581
+        "certificateNumber": "SHM 00830",
+        "name": "Timin",
+        "location": "Karangsari, Pangandaran",
+        "area": 8352
     },
     {
-        "certificateNumber": "SHM-0014",
-        "name": "Sutomo",
-        "location": "Jl. Gajah Mada No. 99, Solo",
-        "area": 618
-    },
-    {
-        "certificateNumber": "SHM-0015",
-        "name": "Juanda",
-        "location": "Jl. Ahmad Yani No. 106, Cirebon",
-        "area": 655
+        "certificateNumber": "AJB 199/1996",
+        "name": "Ucin",
+        "location": "Wonoharjo, Pangandaran",
+        "area": 505
     }
 ]
